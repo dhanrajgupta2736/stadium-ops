@@ -8,9 +8,11 @@ import { useIncidentForm } from './hooks/useIncidentForm';
 
 import StatusBar from './components/layout/StatusBar';
 import ZoneGrid from './components/dashboard/ZoneGrid';
+import StadiumMap from './components/dashboard/StadiumMap';
 import CommandFeed from './components/command/CommandFeed';
 import DispatchTaskList from './components/dispatch/DispatchTaskList';
 import IncidentReporterPanel from './components/incidents/IncidentReporterPanel';
+import GeminiCopilot from './components/copilot/GeminiCopilot';
 
 export default function App() {
   const { zones, applyZoneAdjustment } = useZoneSimulation();
@@ -22,7 +24,7 @@ export default function App() {
   const { formState, updateField, submitForm } = useIncidentForm(logIncident, zones);
 
   return (
-    <div dir={direction} className="min-h-screen bg-base text-ink">
+    <div dir={direction} className="min-h-screen bg-base text-ink transition-colors duration-300">
       <StatusBar
         t={t}
         overallLoad={overallLoad}
@@ -33,31 +35,44 @@ export default function App() {
       />
 
       <main className="mx-auto max-w-[1600px] px-6 py-6">
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_380px]">
-          <div className="space-y-4">
-            <ZoneGrid zones={zones} t={t} />
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-[300px_1fr_400px]">
+          {/* Left Column: Dispatches & Incident Reporter */}
+          <div className="space-y-4 order-3 lg:order-1 lg:col-span-2 xl:col-span-1">
             <DispatchTaskList
               actions={actions}
               completedActionIds={completedActionIds}
               onToggle={toggleAction}
               t={t}
             />
+            <IncidentReporterPanel
+              formState={formState}
+              updateField={updateField}
+              submitForm={submitForm}
+              incidents={incidents}
+              zones={zones}
+              t={t}
+            />
           </div>
 
-          <div>
+          {/* Center Column: Stadium Visual Map & Grid View */}
+          <div className="space-y-4 order-1 lg:order-2 lg:col-span-1">
+            <StadiumMap zones={zones} t={t} />
+            <ZoneGrid zones={zones} t={t} />
+          </div>
+
+          {/* Right Column: AI Decision Assistant & Live Rules Feed */}
+          <div className="space-y-4 order-2 lg:order-3 lg:col-span-1">
+            <GeminiCopilot
+              zones={zones}
+              activeDirectives={directiveFeed}
+              incidents={incidents}
+              completedActions={completedActionIds}
+              locale={locale}
+              direction={direction}
+              t={t}
+            />
             <CommandFeed feed={directiveFeed} t={t} />
           </div>
-        </div>
-
-        <div className="mt-4">
-          <IncidentReporterPanel
-            formState={formState}
-            updateField={updateField}
-            submitForm={submitForm}
-            incidents={incidents}
-            zones={zones}
-            t={t}
-          />
         </div>
       </main>
     </div>

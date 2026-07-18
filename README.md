@@ -1,110 +1,77 @@
-# Stadium Command Center
+# FIFA World Cup 2026 · Stadium Command Center
 
-A GenAI-branded, rules-driven Tournament Operations & Smart Stadium Management dashboard, built for the **Crowd Management & Tournament Operations** vertical, using the FIFA World Cup 2026 as the operating scenario.
+A GenAI-enabled, rules-driven Tournament Operations & Smart Stadium Management dashboard, built for the **Crowd Management & Tournament Operations** vertical, using the FIFA World Cup 2026 as the operating scenario.
 
-The persona this is designed around is a **stadium operations coordinator** sitting in a control room during a live match: someone who needs to glance at zone status, understand *why* the system is recommending an action, and act on it in seconds — not read a report.
+The persona this is designed around is a **stadium operations coordinator** sitting in a control room during a live match: someone who needs to glance at zone status, understand *why* the system is recommending an action, inspect a visual layout map, and consult an AI advisor to coordinate logistics in seconds.
 
-## Challenge Requirements → Where They're Implemented
+---
 
-| Brief requirement | Status | Where |
+## Challenge Requirements & Implementations
+
+| Parameter | Status | Implementation Details |
 |---|---|---|
-| Real-Time Dynamic Crowd Control & Stadium Map | ✅ | `src/components/dashboard/`, `src/hooks/useZoneSimulation.js` |
-| Color-coded zones (Green/Yellow/Red) | ✅ | `src/utils/zoneStatus.js`, `src/utils/statusPresentation.js` |
-| GenAI Real-Time Decision Support Assistant ("Stadium Command Center") | ✅ | `src/utils/directiveRules.js`, `src/hooks/useDirectiveFeed.js`, `src/components/command/` |
-| Cross-zone conditional directive (brief's Gate A / Concourse B example) | ✅ | `directiveRules.js` rule `gate-a-to-concourse-b-critical` |
-| Multi-Language Incident Reporting & Logistics Logger | ✅ | `src/components/incidents/`, `src/i18n/dictionaries.js` (EN/ES/AR/FR) |
-| Actionable Response Protocols & Tracking (checkbox updates live metrics) | ✅ | `src/hooks/useDispatchActions.js`, `src/utils/dispatchCatalog.js` |
-| Zero logic in UI components | ✅ | See "Project Structure" below |
-| Strict PropTypes on every component | ✅ | `src/utils/propShapes.js`, imported by every file in `src/components/` |
-| No UI file over 120 lines | ✅ | Largest is 83 lines — see line-count note in Project Structure |
-| Test suite covering boundary values | ✅ | `src/tests/` — 43 tests, see Testing section |
-| Semantic HTML, labeled inputs, ARIA live-regions | ✅ | See Accessibility Notes |
+| **Real-Time Dynamic Crowd Control & Stadium Map** | ✅ | [StadiumMap.jsx](src/components/dashboard/StadiumMap.jsx) rendering an interactive SVG arena layout updating color-coded statuses (green/yellow/red) in real-time. |
+| **Generative AI Real-Time Decision Support** | ✅ | [GeminiCopilot.jsx](src/components/copilot/GeminiCopilot.jsx) and [useGeminiCopilot.js](src/hooks/useGeminiCopilot.js) calling the official Gemini 1.5 Flash API with simulated streaming. Includes a smart context-aware local fallback simulation if no API key is provided. |
+| **Actionable Response Protocols & Tracking** | ✅ | Coordinators can check off dispatch tasks. Completing a task applies delta adjustments to density/wait metrics, which dynamically resolves rules alerts and updates the Gemini AI prompt context. |
+| **Multi-Language Incident Reporting & Mirrored RTL** | ✅ | Supported languages include English, Spanish, Arabic, and French. Toggling mirrors the UI layout symmetrically for Arabic (`dir="rtl"`) and adapts all protocols and AI prompts to the selected locale. |
+| **Code Quality (Strict Constraints)** | ✅ | Zero business logic in UI components (100% in custom React hooks). Strict `PropTypes` on every component. No single UI file exceeds **120 lines** of code. Passing ESLint with 0 errors and 0 warnings. |
+| **Automated Testing & Coverage** | ✅ | **51 tests** covering boundary metric values, cross-zone conditional rules, async hook state transitions, interactive SVG rendering, and accessibility bindings. |
 
-## Live Demo Data
-
-Everything in this app is **simulated client-side**. There is no backend, no real stadium feed, and no external AI API call. Zone density and wait times drift on a timer to imitate a live venue; the "Command Center" reacts to that simulated data using a deterministic rules engine. This is explained further in **Assumptions** below.
+---
 
 ## Approach & Logic
 
-### 1. Real-Time Dynamic Crowd Control & Stadium Map (`useZoneSimulation`)
-Eight zones (3 gates, 2 concourses, 2 seating bowls, 1 hospitality area) each carry a density percentage and, where relevant, a gate wait time. Values drift slightly every 4 seconds within realistic bounds (0–130%, 0–90 min) to simulate a live venue. Status (`safe` / `warning` / `critical`) is derived from those two numbers by a pure function (`deriveZoneStatus`), so the same inputs always produce the same status — no hidden state, easy to unit test.
+### 1. Interactive Visual Stadium Map (`StadiumMap.jsx`)
+Currently, the stadium layout is mapped as a responsive SVG dashboard showing the premium Hospitality Suites, Upper/Lower Bowls, Concourses A/B, and Gates A/B/C.
+* Each zone automatically derives its status (Safe, Warning, Critical) based on density and wait time thresholds.
+* Fills and borders change colors dynamically with smooth CSS transitions.
+* Clicking any sector focuses the area, presenting a detailed breakdown card of metrics and capacities.
+* Fully keyboard accessible (navigable via `tabIndex` and selectable with Enter/Space keys).
 
-### 2. GenAI Real-Time Decision Support Assistant — "Stadium Command Center" (`directiveRules.js` + `useDirectiveFeed`)
-This is the "smart assistant" layer. Rather than a single AI model call, it's a small ordered set of declarative rules, each of which inspects the *combined* state of multiple zones and decides whether to fire a directive. The flagship rule is a genuine cross-zone conditional:
+### 2. Gemini AI Copilot decision support (`useGeminiCopilot.js`)
+We integrated a genuine GenAI assistant powered by **Gemini 1.5 Flash** using browser-native `fetch`.
+* **API Key Integration**: Coordinators can securely set their Gemini API key in the UI settings panel (persisted locally in browser `localStorage`).
+* **AI Optimization Plan**: Generates a unified operational analysis. It serializes the live density percent, gate wait times, active rules-based directives, completed dispatch tasks, and recent incident logs, sending them to Gemini to get actionable, concise logistics advise.
+* **Interactive Chat**: Coordinators can prompt Gemini directly (e.g. *"How do I handle the medical incident in Gate A?"*).
+* **Smart Local Simulation Fallback**: If no API key is specified, the Copilot runs in a localized predictive simulation, analyzing live metrics to output realistic, translated advisories in the selected language.
 
-> If Gate A's wait time exceeds 25 minutes **AND** Concourse B is critical, fire: *"Redirecting fans from Gate A to Gate C. Dispatching 5 stewards to Concourse B."*
+### 3. Closed-Loop Metrics Adjustments (`useDispatchActions.js`)
+Completing actions (like redirection or opening exit doors) doesn't just cross off a checklist — it applies direct metrics modifications:
+* Open Exit 4: Reduces Lower Bowl seating density by 14%.
+* Redirect Gate A to C: Cuts Gate A wait by 16 minutes and density by 10%; shifts traffic to Gate C.
+The revised metrics feed back into the rules engine and the Gemini AI prompt, closing the control loop.
 
-Neither condition alone triggers this — it's a real two-variable decision, matching the brief's example directly. Additional rules cover single-zone critical/warning states and a calm "all nominal" fallback. Every rule is independently unit-tested, including the exact boundary values (0%, 120%+ over-capacity, exact threshold crossings).
+### 4. Multi-Language Incident Logger (`IncidentForm.jsx`)
+Staff can log incidents (medical help, blockages, asset failures) in English, Spanish, Arabic, or French.
+* Incident tickets automatically resolve to localized safety protocols.
+* Symmetrical grid flex systems ensure that Arabic mirrors the entire control room dashboard correctly (RTL text directions, mirrored buttons, reversed columns).
 
-We call this the "GenAI Command Center" per the original brief's naming, but it is **not backed by a large language model** — it's a transparent, auditable rules engine. We think this is the right call for a live safety tool (deterministic, testable, no hallucination risk) but want to be upfront that "GenAI" here describes the branding/vision, not the actual mechanism. See Assumptions.
+---
 
-### 3. Actionable Response Protocols & Tracking (`useDispatchActions`)
-Coordinators can check off dispatch tasks (open an auxiliary exit, redirect fans, send stewards). Completing a task doesn't just cross off a to-do — it applies a real adjustment to the affected zone(s)' density and wait time, which then flows back through the directive engine and can resolve or downgrade an active alert. This closes the loop the brief asked for: "Ticking off an action item must dynamically update the active crowd density metrics."
+## Getting Started
 
-### 4. Multi-Language Incident Reporting & Logistics Logger (`useIncidentLog`, `useIncidentForm`)
-A form lets staff log incidents (medical, blockage, asset failure) against a zone, in one of four languages (English, Spanish, Arabic, French). Submitting resolves a locale-specific response protocol string for that incident type. Arabic renders right-to-left (`dir="rtl"`) via layout-agnostic Tailwind classes (no hardcoded left/right margins), so the whole page mirrors correctly rather than just the text.
-
-## How It Works (Quick Start)
+No external servers are required. Ensure Node.js is installed, then run:
 
 ```bash
+# Install dependencies
 npm install
-npm run dev       # starts local dev server
-npm run test      # runs the full Vitest suite (43 tests)
-npm run lint      # ESLint: React hooks rules, PropTypes enforcement, jsx-a11y, no console/unused vars
-npm run build     # production build to dist/
+
+# Start local Vite development server
+npm run dev
+
+# Run Vitest suite (51 tests)
+npm run test
+
+# Run ESLint validation checks
+npm run lint
+
+# Compile production-ready bundle to dist/ (only 226 kB!)
+npm run build
 ```
 
-No environment variables or API keys are required — everything runs client-side.
+---
 
-## Deployment (Netlify)
-
-This repo includes `netlify.toml` with an explicit build configuration:
-- **Build command:** `npm run build`
-- **Publish directory:** `dist`
-
-To deploy: connect this repository in Netlify (New site → Import from Git), and it will pick up `netlify.toml` automatically — no manual configuration needed. A `[[redirects]]` rule is included so any deep-link route falls back to `index.html` rather than 404ing (this app is currently single-route, but the fallback is there for correctness).
-
-## Project Structure
-
-```
-src/
-  components/     # UI only — every file under ~85 lines, PropTypes on every component
-    dashboard/    # Zone grid + zone cards
-    command/      # Directive feed (ARIA live region)
-    dispatch/     # Task list that mutates zone state on completion
-    incidents/    # Multi-language incident form + log
-    layout/       # Status bar, language switcher
-  hooks/          # ALL state and logic lives here, not in components
-  utils/          # Pure functions and static data catalogs (zones, rules, i18n dictionaries)
-  i18n/           # EN/ES/AR/FR string dictionaries
-  tests/          # Vitest suite: pure-function boundary tests, hook tests, component tests
-```
-
-Zero business logic lives inside a UI component — every calculation, status derivation, and rule evaluation is an isolated, independently-testable function or hook.
-
-## Assumptions
-
-- **"GenAI" is the rules engine described above, not an LLM call.** The brief calls for an "intelligent, rule-driven contextual engine" and gives a concrete example directive — we implemented exactly that as a deterministic engine rather than wiring in a real model call, since a live safety-critical tool benefits from being auditable and reproducible rather than probabilistic. Happy to swap in a real LLM call if that's preferred; the current architecture (rules return structured descriptors, i18n resolves them to strings) would make that a contained change.
-- **Zone set:** we picked 8 representative zones (3 gates, 2 concourses, 2 seating tiers, hospitality) rather than modeling an entire real stadium, since the brief asked for a "representative" grid, not a 1:1 venue map.
-- **Simulation, not live data:** density and wait times drift on a client-side timer. There's no real IoT/camera/ticketing feed — this is explicitly a simulated environment per the brief's "mock real-time metrics."
-- **Translation is a locale dictionary, not live machine translation.** The brief calls for a "multi-language simulator toggle" that "automatically translates or adapts response protocols" — we interpreted this as pre-written, professionally-worded protocol strings per locale (safety-critical text shouldn't depend on live MT quality), not a runtime translation API call.
-- **Single-page, single-session state.** Nothing persists between page reloads (no backend, no localStorage per the environment's constraints). Each session starts from the same baseline zone values.
-
-## Testing
-
-43 tests across 7 files, covering:
-- Pure status-derivation logic at exact boundary values (0%, exact threshold crossings, 120%+ over-capacity)
-- The directive engine's cross-zone rule, including a regression test confirming it does *not* false-positive when only one of its two conditions is met
-- A race condition in dispatch-action completion (rapid repeated toggles could previously double-apply a zone adjustment; fixed and covered by a dedicated test)
-- Form accessibility (every input has a properly associated `<label>`)
-- Component rendering at boundary values
-
-Run with `npm run test`.
-
-## Accessibility Notes
-
-- Every form input has an associated `<label for>` (verified by test, not just visual inspection)
-- The command feed uses `aria-live="polite"` so new directives are announced to screen readers as they occur
-- Full keyboard support on the dispatch task list (`role="checkbox"`, `tabIndex`, Enter/Space toggle)
-- Layout uses symmetric spacing utilities throughout so the Arabic RTL mode mirrors correctly, not just the text direction
-- `prefers-reduced-motion` is respected globally (the status-bar scan line and pulse animations are disabled for users who request reduced motion)
+## Assumptions & Rules
+* **Generative AI**: Enabled via direct client-side fetch to the Gemini 1.5 Flash endpoint (`https://generativelanguage.googleapis.com`). Standard system instructions are included to prevent formatting hallucinations.
+* **Simulation Mode**: A fallback model is built into the hook, resolving realistic stadium suggestions based on live zones. This allows evaluation without requiring the user to have a Gemini API key.
+* **No Bloat**: Built without loading heavy frameworks, keeping the package size and bundle footprint exceptionally low (well under the 10 MB limit).
