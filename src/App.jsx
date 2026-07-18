@@ -34,34 +34,22 @@ export default function App() {
         localeMeta={localeMeta}
       />
 
-      <main className="mx-auto max-w-[1600px] px-6 py-6">
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-[300px_1fr_400px]">
-          {/* Left Column: Dispatches & Incident Reporter */}
-          <div className="space-y-4 order-3 lg:order-1 lg:col-span-2 xl:col-span-1">
+      <main className="mx-auto max-w-[1600px] px-6 py-6 space-y-6">
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_400px]">
+          {/* Left Column: Visual Map, Cards, and Checklist */}
+          <div className="space-y-6">
+            <StadiumMap zones={zones} t={t} />
+            <ZoneGrid zones={zones} t={t} />
             <DispatchTaskList
               actions={actions}
               completedActionIds={completedActionIds}
               onToggle={toggleAction}
               t={t}
             />
-            <IncidentReporterPanel
-              formState={formState}
-              updateField={updateField}
-              submitForm={submitForm}
-              incidents={incidents}
-              zones={zones}
-              t={t}
-            />
           </div>
 
-          {/* Center Column: Stadium Visual Map & Grid View */}
-          <div className="space-y-4 order-1 lg:order-2 lg:col-span-1">
-            <StadiumMap zones={zones} t={t} />
-            <ZoneGrid zones={zones} t={t} />
-          </div>
-
-          {/* Right Column: AI Decision Assistant & Live Rules Feed */}
-          <div className="space-y-4 order-2 lg:order-3 lg:col-span-1">
+          {/* Right Column: AI Assistant & Rules Feed */}
+          <div className="space-y-6">
             <GeminiCopilot
               zones={zones}
               activeDirectives={directiveFeed}
@@ -73,6 +61,18 @@ export default function App() {
             />
             <CommandFeed feed={directiveFeed} t={t} />
           </div>
+        </div>
+
+        {/* Bottom Section: Full-Width Administrative Incident Logger */}
+        <div>
+          <IncidentReporterPanel
+            formState={formState}
+            updateField={updateField}
+            submitForm={submitForm}
+            incidents={incidents}
+            zones={zones}
+            t={t}
+          />
         </div>
       </main>
     </div>
