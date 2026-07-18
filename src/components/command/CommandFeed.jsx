@@ -5,7 +5,7 @@ import DirectiveEntry from './DirectiveEntry';
 
 export default function CommandFeed({ feed, t }) {
   return (
-    <section aria-labelledby="command-feed-heading" className="flex h-full flex-col rounded-lg border border-line bg-panel p-4">
+    <section aria-labelledby="command-feed-heading" className="flex flex-col rounded-lg border border-line bg-panel p-4">
       <div className="flex items-center gap-2">
         <BrainCircuit className="h-5 w-5 text-accent" aria-hidden="true" />
         <h2 id="command-feed-heading" className="font-display text-lg uppercase tracking-wide text-ink">

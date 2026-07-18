@@ -23,7 +23,7 @@ export default function GeminiCopilot({ zones, activeDirectives, incidents, comp
   return (
     <section
       aria-labelledby="copilot-heading"
-      className="flex h-full flex-col rounded-lg border border-line bg-panel p-4"
+      className="flex flex-col rounded-lg border border-line bg-panel p-4"
     >
       <div className="flex items-center justify-between border-b border-line pb-3">
         <div className="flex items-center gap-2">
