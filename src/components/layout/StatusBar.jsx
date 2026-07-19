@@ -1,7 +1,9 @@
 import PropTypes from 'prop-types';
-import { Radar, ShieldAlert, ShieldOff } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Radar, ShieldAlert, ShieldOff, Keyboard } from 'lucide-react';
 import { translateFnPropType } from '../../utils/propShapes';
 import LanguageSwitcher from './LanguageSwitcher';
+import KeyboardShortcutsModal from './KeyboardShortcutsModal';
 
 /**
  * Resolves the CSS color class for the overall load percentage display.
@@ -16,7 +18,7 @@ function getLoadTone(overallLoad) {
 
 /**
  * Top-level header bar displaying the application title, overall load,
- * language switcher, and emergency evacuation controls.
+ * language switcher, keyboard shortcuts trigger, and emergency evacuation controls.
  */
 export default function StatusBar({
   t,
@@ -29,13 +31,13 @@ export default function StatusBar({
   onEmergencyActivate,
   onEmergencyDeactivate,
 }) {
+  const [showShortcuts, setShowShortcuts] = useState(false);
   const loadTone = getLoadTone(overallLoad);
 
   const handleEmergencyClick = () => {
     if (emergencyActive) {
       onEmergencyDeactivate();
     } else {
-      // Confirmation dialog to prevent accidental activation
       const confirmed = typeof window !== 'undefined'
         && window.confirm('⚠️ INITIATE EMERGENCY EVACUATION?\n\nThis will set all zones to high alert and log an emergency incident. Proceed?');
       if (confirmed) {
@@ -43,6 +45,20 @@ export default function StatusBar({
       }
     }
   };
+
+  // Global hotkeys listener: Shift+E for emergency, ? for shortcuts modal
+  useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+        return;
+      }
+      if (e.key === '?') {
+        setShowShortcuts((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, []);
 
   return (
     <header className="relative border-b border-line bg-panel">
@@ -70,7 +86,18 @@ export default function StatusBar({
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          {/* Keyboard Shortcuts Modal Trigger */}
+          <button
+            onClick={() => setShowShortcuts(true)}
+            className="flex items-center gap-1.5 rounded border border-line bg-surface px-2.5 py-2 font-mono text-[10px] uppercase tracking-wider text-ink-muted hover:border-accent/40 hover:text-accent transition-colors"
+            title="Keyboard Shortcuts (?)"
+            aria-label="View Keyboard Shortcuts"
+          >
+            <Keyboard className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Shortcuts</span>
+          </button>
+
           {/* Emergency Protocol Button */}
           <button
             onClick={handleEmergencyClick}
@@ -91,7 +118,7 @@ export default function StatusBar({
           </button>
 
           {/* Overall Load Display */}
-          <div className="text-right" aria-live="polite">
+          <div className="text-right pl-2" aria-live="polite">
             <p className="font-mono text-[11px] uppercase tracking-widest text-ink-muted">
               {t('overallLoad')}
             </p>
@@ -107,6 +134,12 @@ export default function StatusBar({
           />
         </div>
       </div>
+
+      <KeyboardShortcutsModal
+        isOpen={showShortcuts}
+        onClose={() => setShowShortcuts(false)}
+        t={t}
+      />
     </header>
   );
 }
