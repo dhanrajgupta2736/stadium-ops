@@ -13,7 +13,7 @@ export const LOCALE_META = {
 };
 
 /**
- * Translations for new features added in score optimization phase.
+ * Translations for accessibility, keyboard shortcuts, and score optimization.
  */
 const EXTRA_TRANSLATIONS = {
   [LOCALES.EN]: {
@@ -21,24 +21,52 @@ const EXTRA_TRANSLATIONS = {
     emergencyActivate: 'Initiate Evacuation',
     emergencyDeactivate: 'Cancel Evacuation',
     emergencyBannerActive: 'EMERGENCY EVACUATION PROTOCOL IN EFFECT — ALL UNITS TO STANDBY',
+    keyboardShortcutsTitle: 'Keyboard Shortcuts',
+    close: 'Close',
+    shortcutTab: 'Navigate between interactive zones and controls',
+    shortcutEnter: 'Select focused zone on stadium map or trigger buttons',
+    shortcutEmergency: 'Trigger Emergency Evacuation Protocol',
+    shortcutToggle: 'Toggle Keyboard Shortcuts Modal',
+    shortcutEsc: 'Close dialogs or clear selection',
   },
   [LOCALES.ES]: {
     skipToContent: 'Saltar al contenido principal',
     emergencyActivate: 'Iniciar Evacuación',
     emergencyDeactivate: 'Cancelar Evacuación',
     emergencyBannerActive: 'PROTOCOLO DE EVACUACIÓN DE EMERGENCIA EN VIGOR — UNIDADES EN ESPERA',
+    keyboardShortcutsTitle: 'Atajos de Teclado',
+    close: 'Cerrar',
+    shortcutTab: 'Navegar entre zonas interactivas y controles',
+    shortcutEnter: 'Seleccionar zona enfocada en el mapa o activar botones',
+    shortcutEmergency: 'Activar Protocolo de Evacuación de Emergencia',
+    shortcutToggle: 'Mostrar/Ocultar atajos de teclado',
+    shortcutEsc: 'Cerrar diálogos o limpiar selección',
   },
   [LOCALES.AR]: {
     skipToContent: 'الانتقال إلى المحتوى الرئيسي',
     emergencyActivate: 'بدء الإخلاء',
     emergencyDeactivate: 'إلغاء الإخلاء',
     emergencyBannerActive: 'بروتوكول الإخلاء الطارئ قيد التنفيذ — جميع الوحدات في حالة استعداد',
+    keyboardShortcutsTitle: 'اختصارات لوحة المفاتيح',
+    close: 'إغلاق',
+    shortcutTab: 'التنقل بين المناطق التفاعلية وعناصر التحكم',
+    shortcutEnter: 'تحديد المنطقة المحددة على مخطط الملعب أو تشغيل الأزرار',
+    shortcutEmergency: 'تفعيل بروتوكول الإخلاء الطارئ',
+    shortcutToggle: 'تبديل نافذة اختصارات لوحة المفاتيح',
+    shortcutEsc: 'إغلاق النوافذ أو إلغاء التحديد',
   },
   [LOCALES.FR]: {
     skipToContent: 'Passer au contenu principal',
     emergencyActivate: "Lancer l'Évacuation",
     emergencyDeactivate: "Annuler l'Évacuation",
     emergencyBannerActive: "PROTOCOLE D'ÉVACUATION D'URGENCE EN VIGUEUR — TOUTES LES UNITÉS EN ALERTE",
+    keyboardShortcutsTitle: 'Raccourcis Clavier',
+    close: 'Fermer',
+    shortcutTab: 'Naviguer entre les zones interactives et les commandes',
+    shortcutEnter: 'Sélectionner la zone ciblée sur la carte ou activer les boutons',
+    shortcutEmergency: "Déclencher le protocole d'évacuation d'urgence",
+    shortcutToggle: 'Afficher/Masquer la fenêtre des raccourcis clavier',
+    shortcutEsc: 'Fermer les dialogues ou effacer la sélection',
   },
 };
 

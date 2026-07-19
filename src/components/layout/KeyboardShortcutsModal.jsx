@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { Keyboard, X } from 'lucide-react';
 import { translateFnPropType } from '../../utils/propShapes';
 
-export default function KeyboardShortcutsModal({ isOpen, onClose, _t }) {
+export default function KeyboardShortcutsModal({ isOpen, onClose, t }) {
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' && isOpen) {
@@ -17,11 +17,11 @@ export default function KeyboardShortcutsModal({ isOpen, onClose, _t }) {
   if (!isOpen) return null;
 
   const shortcuts = [
-    { key: 'Tab / Shift+Tab', desc: 'Navigate between interactive zones and controls' },
-    { key: 'Enter / Space', desc: 'Select focused zone on stadium map or trigger buttons' },
-    { key: 'Shift + E', desc: 'Trigger Emergency Evacuation Protocol' },
-    { key: '?', desc: 'Toggle Keyboard Shortcuts Modal' },
-    { key: 'Esc', desc: 'Close dialogs or clear selection' },
+    { key: 'Tab / Shift+Tab', descKey: 'shortcutTab' },
+    { key: 'Enter / Space', descKey: 'shortcutEnter' },
+    { key: 'Shift + E', descKey: 'shortcutEmergency' },
+    { key: '?', descKey: 'shortcutToggle' },
+    { key: 'Esc', descKey: 'shortcutEsc' },
   ];
 
   return (
@@ -36,13 +36,13 @@ export default function KeyboardShortcutsModal({ isOpen, onClose, _t }) {
           <div className="flex items-center gap-2">
             <Keyboard className="h-5 w-5 text-accent" />
             <h2 id="shortcuts-title" className="font-display text-lg uppercase tracking-wide text-ink">
-              Keyboard Shortcuts
+              {t('keyboardShortcutsTitle')}
             </h2>
           </div>
           <button
             onClick={onClose}
             className="rounded p-1 text-ink-muted hover:bg-surface hover:text-ink"
-            aria-label="Close dialog"
+            aria-label={t('close')}
           >
             <X className="h-4 w-4" />
           </button>
@@ -51,7 +51,7 @@ export default function KeyboardShortcutsModal({ isOpen, onClose, _t }) {
         <dl className="mt-4 space-y-3">
           {shortcuts.map((s) => (
             <div key={s.key} className="flex items-center justify-between gap-4">
-              <dt className="font-mono text-xs text-ink-muted">{s.desc}</dt>
+              <dt className="font-mono text-xs text-ink-muted">{t(s.descKey)}</dt>
               <dd>
                 <kbd className="rounded border border-line bg-surface px-2 py-1 font-mono text-[10px] font-semibold text-accent shadow-sm">
                   {s.key}
@@ -66,7 +66,7 @@ export default function KeyboardShortcutsModal({ isOpen, onClose, _t }) {
             onClick={onClose}
             className="rounded bg-accent px-4 py-2 font-mono text-xs font-semibold uppercase tracking-wider text-panel hover:bg-accent/90"
           >
-            Close
+            {t('close')}
           </button>
         </div>
       </div>
@@ -77,5 +77,5 @@ export default function KeyboardShortcutsModal({ isOpen, onClose, _t }) {
 KeyboardShortcutsModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
-  _t: translateFnPropType,
+  t: translateFnPropType,
 };
