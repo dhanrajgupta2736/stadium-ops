@@ -22,15 +22,15 @@ function TestHarness() {
 }
 
 describe('ErrorBoundary', () => {
+  /* eslint-disable no-console */
   const originalError = console.error;
   beforeEach(() => {
-    /* eslint-disable-next-line no-console */
     console.error = vi.fn();
   });
   afterEach(() => {
-    /* eslint-disable-next-line no-console */
     console.error = originalError;
   });
+  /* eslint-enable no-console */
 
   it('renders children when no error occurs', () => {
     render(
