@@ -8,9 +8,12 @@ const EMPTY_FORM_STATE = {
 };
 
 /**
- * Owns the incident report form's field values and submit handling.
- * Delegates actual persistence to the logIncident callback and resets
- * itself only when that submission reports success.
+ * Custom React hook that owns the incident report form's field values and submit handling.
+ * Delegates actual persistence to the `logIncident` callback and resets itself on success.
+ *
+ * @param {Function} logIncident - Persistence callback from useIncidentLog.
+ * @param {Array<Object>} zoneOptions - Available stadium zones to populate the zone dropdown.
+ * @returns {{ formState: Object, updateField: Function, submitForm: Function, lastLoggedEntry: Object|null }}
  */
 export function useIncidentForm(logIncident, zoneOptions) {
   const [formState, setFormState] = useState(() => ({

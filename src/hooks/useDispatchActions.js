@@ -2,15 +2,15 @@ import { useCallback, useRef, useState } from 'react';
 import { DISPATCH_ACTIONS } from '../utils/dispatchCatalog';
 
 /**
- * Owns which dispatch tasks have been completed. Completing a task
- * applies its declared zone adjustments exactly once via the provided
- * applyZoneAdjustment callback (typically from useZoneSimulation).
+ * Custom React hook managing dispatch task completions and state.
+ * Completing a task applies its declared zone adjustments exactly once
+ * via the provided `applyZoneAdjustment` callback.
  *
- * Guards against rapid repeated calls (e.g. a fast double-click, or
- * several toggles inside the same React batch) by tracking completion
- * in a ref that is checked-and-set synchronously, rather than relying
- * on the `completedActionIds` state value, which can be stale within
- * a single batch.
+ * Guards against rapid repeated calls (e.g. double-click) by tracking completion
+ * in a ref checked-and-set synchronously, rather than relying on state values.
+ *
+ * @param {Function} applyZoneAdjustment - Callback to mutate zone density/wait metrics.
+ * @returns {{ actions: Array<Object>, completedActionIds: Set<string>, toggleAction: Function }}
  */
 export function useDispatchActions(applyZoneAdjustment) {
   const [completedActionIds, setCompletedActionIds] = useState(() => new Set());

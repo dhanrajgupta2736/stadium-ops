@@ -35,11 +35,11 @@ describe('useGeminiCopilot', () => {
     );
 
     act(() => {
-      result.current.saveApiKey('test-api-key');
+      result.current.saveApiKey('test-api-key-123456789012345678901234567890');
     });
 
-    expect(result.current.apiKey).toBe('test-api-key');
-    expect(window.localStorage.getItem('stadium_ops_gemini_api_key')).toBe('test-api-key');
+    expect(result.current.apiKey).toBe('test-api-key-123456789012345678901234567890');
+    expect(window.localStorage.getItem('stadium_ops_gemini_api_key')).toBe('test-api-key-123456789012345678901234567890');
   });
 
   it('clears chat history when requested', () => {
@@ -80,5 +80,42 @@ describe('useGeminiCopilot', () => {
     expect(result.current.chatHistory).toHaveLength(2);
     expect(result.current.chatHistory[1].role).toBe('model');
     expect(result.current.chatHistory[1].text).toContain('All zones are running nominal');
+  });
+
+  it('sanitizes user message and strips HTML tags before sending', () => {
+    const { result } = renderHook(() =>
+      useGeminiCopilot(mockZones, mockDirectives, mockIncidents, mockCompletedActions, 'en')
+    );
+
+    act(() => {
+      result.current.sendMessage('<script>alert("xss")</script>How is Gate A?');
+    });
+
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    expect(result.current.chatHistory[0].text).toBe('alert("xss")How is Gate A?');
+  });
+
+  it('uses simulation fallback if API key is too short or invalid', () => {
+    const { result } = renderHook(() =>
+      useGeminiCopilot(mockZones, mockDirectives, mockIncidents, mockCompletedActions, 'en')
+    );
+
+    act(() => {
+      result.current.saveApiKey('short');
+    });
+
+    act(() => {
+      result.current.sendMessage('Test query');
+    });
+
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    // Should fall back to simulation mode because key is under 30 chars
+    expect(result.current.chatHistory[1].text).toContain('(Simulated reply to: "Test query")');
   });
 });

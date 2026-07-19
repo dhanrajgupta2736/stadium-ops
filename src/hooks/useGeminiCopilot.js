@@ -1,7 +1,23 @@
-/* global localStorage, fetch, setTimeout */
-import { useState, useCallback } from 'react';
+/* global localStorage, fetch, setTimeout, clearTimeout, AbortController */
+import { useState, useCallback, useEffect, useRef } from 'react';
 
+/** localStorage key used to persist the Gemini API key across sessions. */
 const API_KEY_STORAGE_KEY = 'stadium_ops_gemini_api_key';
+
+/** Expected minimum length of a valid Gemini API key. */
+const API_KEY_MIN_LENGTH = 30;
+
+/** Delay (ms) before the simulation fallback returns a mock response. */
+const SIMULATION_DELAY_PLAN_MS = 1200;
+
+/** Delay (ms) before the simulation fallback returns a chat response. */
+const SIMULATION_DELAY_CHAT_MS = 1000;
+
+/** Timeout (ms) for Gemini API requests before aborting. */
+const API_REQUEST_TIMEOUT_MS = 30000;
+
+/** Maximum allowed length for user chat input to prevent abuse. */
+const MAX_INPUT_LENGTH = 2000;
 
 // Localized mock responses for the simulation mode fallback
 const SIMULATION_RESPONSES = {
@@ -35,6 +51,15 @@ const SIMULATION_RESPONSES = {
   }
 };
 
+/**
+ * Generates a context-aware mock response based on current zone metrics.
+ * Used as a fallback when no Gemini API key is configured.
+ *
+ * @param {Array} zones - Current zone state array
+ * @param {Array} incidents - Active incident entries
+ * @param {string} locale - Current UI locale code
+ * @returns {string} A localized advisory response string
+ */
 function generateMockResponse(zones, incidents, locale) {
   const lang = SIMULATION_RESPONSES[locale] ? locale : 'en';
   const responses = SIMULATION_RESPONSES[lang];
@@ -66,12 +91,63 @@ function generateMockResponse(zones, incidents, locale) {
   return responses.nominal;
 }
 
+/**
+ * Sanitizes user input before sending to the Gemini API.
+ * Strips HTML tags and trims excessive whitespace to prevent injection.
+ *
+ * @param {string} input - Raw user input string
+ * @returns {string} Sanitized input safe for API transmission
+ */
+function sanitizeInput(input) {
+  return input
+    .replace(/<[^>]*>/g, '')       // Strip HTML tags
+    .replace(/\s{3,}/g, '  ')      // Collapse excessive whitespace
+    .trim()
+    .slice(0, MAX_INPUT_LENGTH);   // Enforce maximum length
+}
+
+/**
+ * Validates that the provided string looks like a Gemini API key.
+ * @param {string} key - The API key to validate
+ * @returns {boolean} True if the key passes basic format checks
+ */
+function isValidApiKeyFormat(key) {
+  return typeof key === 'string' && key.trim().length >= API_KEY_MIN_LENGTH;
+}
+
+/**
+ * Custom React hook for managing the Gemini AI Copilot integration.
+ * Handles API key storage, real-time context serialization, chat history,
+ * and a simulation fallback when no API key is provided.
+ *
+ * @param {Array} zones - Current zone state array from useZoneSimulation
+ * @param {Array} activeDirectives - Current active directives from useDirectiveFeed
+ * @param {Array} incidents - Current incident log from useIncidentLog
+ * @param {Set} completedActions - Set of completed dispatch action IDs
+ * @param {string} locale - Current UI locale code
+ * @returns {Object} Copilot state and action functions
+ */
 export function useGeminiCopilot(zones, activeDirectives, incidents, completedActions, locale) {
   const [apiKey, setApiKey] = useState(() => localStorage.getItem(API_KEY_STORAGE_KEY) || '');
   const [isLoading, setIsLoading] = useState(false);
   const [chatHistory, setChatHistory] = useState([]);
   const [error, setError] = useState(null);
+  const abortControllerRef = useRef(null);
 
+  // Cleanup any in-flight requests when the hook unmounts
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
+
+  /**
+   * Persists the API key to localStorage after trimming whitespace.
+   * Removes the key from storage if an empty string is provided.
+   * @param {string} key - The API key to save
+   */
   const saveApiKey = useCallback((key) => {
     const trimmed = key.trim();
     setApiKey(trimmed);
@@ -82,6 +158,11 @@ export function useGeminiCopilot(zones, activeDirectives, incidents, completedAc
     }
   }, []);
 
+  /**
+   * Builds a structured system prompt with current stadium metrics
+   * for the Gemini API system instruction.
+   * @returns {string} The complete system context prompt
+   */
   const buildSystemContext = useCallback(() => {
     const serializedZones = zones.map(z => ({
       name: z.label,
@@ -115,24 +196,39 @@ IMPORTANT: You MUST respond in the following language: ${locale.toUpperCase()}.`
     return systemPrompt;
   }, [zones, activeDirectives, incidents, completedActions, locale]);
 
+  /**
+   * Sends a prompt to the Gemini API and appends the response to chat history.
+   * Includes AbortController timeout and structured error handling.
+   * @param {string} userPrompt - The user's message
+   * @param {Array} currentHistory - Current chat history for context
+   */
   const callGemini = useCallback(async (userPrompt, currentHistory) => {
     setIsLoading(true);
     setError(null);
 
-    const systemContext = buildSystemContext();
+    // Abort any previous in-flight request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
-    // Setup history formatted for Gemini API
+    // Set a timeout to auto-abort long-running requests
+    const timeoutId = setTimeout(() => controller.abort(), API_REQUEST_TIMEOUT_MS);
+
+    const systemContext = buildSystemContext();
+    const sanitizedPrompt = sanitizeInput(userPrompt);
+
     const formattedHistory = currentHistory.map(h => ({
       role: h.role === 'user' ? 'user' : 'model',
       parts: [{ text: h.text }]
     }));
 
-    // Add new user prompt to payload
     const contents = [
       ...formattedHistory,
       {
         role: 'user',
-        parts: [{ text: userPrompt }]
+        parts: [{ text: sanitizedPrompt }]
       }
     ];
 
@@ -144,6 +240,7 @@ IMPORTANT: You MUST respond in the following language: ${locale.toUpperCase()}.`
           headers: {
             'Content-Type': 'application/json',
           },
+          signal: controller.signal,
           body: JSON.stringify({
             contents,
             systemInstruction: {
@@ -152,6 +249,8 @@ IMPORTANT: You MUST respond in the following language: ${locale.toUpperCase()}.`
           })
         }
       );
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -167,22 +266,32 @@ IMPORTANT: You MUST respond in the following language: ${locale.toUpperCase()}.`
 
       setChatHistory(prev => [
         ...prev,
-        { role: 'user', text: userPrompt },
+        { role: 'user', text: sanitizedPrompt },
         { role: 'model', text: answerText }
       ]);
     } catch (err) {
-      /* eslint-disable-next-line no-console */
-      console.error(err);
-      setError(err.message);
+      if (err.name === 'AbortError') {
+        setError('Request timed out. Please try again.');
+      } else {
+        /* eslint-disable-next-line no-console */
+        console.error(err);
+        setError(err.message);
+      }
     } finally {
+      clearTimeout(timeoutId);
       setIsLoading(false);
+      abortControllerRef.current = null;
     }
   }, [apiKey, buildSystemContext]);
 
+  /**
+   * Generates a full stadium optimization plan.
+   * Falls back to simulation mode if no valid API key is configured.
+   */
   const generateOptimizationPlan = useCallback(() => {
     const userPrompt = "Provide a complete stadium optimization plan based on the current situation.";
     
-    if (!apiKey) {
+    if (!apiKey || !isValidApiKeyFormat(apiKey)) {
       setIsLoading(true);
       setError(null);
       setTimeout(() => {
@@ -193,35 +302,40 @@ IMPORTANT: You MUST respond in the following language: ${locale.toUpperCase()}.`
           { role: 'model', text: mockText }
         ]);
         setIsLoading(false);
-      }, 1200);
+      }, SIMULATION_DELAY_PLAN_MS);
       return;
     }
 
     callGemini(userPrompt, chatHistory);
   }, [apiKey, zones, incidents, locale, chatHistory, callGemini]);
 
+  /**
+   * Sends a free-form chat message to the Gemini AI copilot.
+   * @param {string} text - The user's message text
+   */
   const sendMessage = useCallback((text) => {
-    const trimmed = text.trim();
-    if (!trimmed) return;
+    const sanitized = sanitizeInput(text);
+    if (!sanitized) return;
 
-    if (!apiKey) {
+    if (!apiKey || !isValidApiKeyFormat(apiKey)) {
       setIsLoading(true);
       setError(null);
       setTimeout(() => {
-        const mockText = generateMockResponse(zones, incidents, locale) + `\n\n(Simulated reply to: "${trimmed}")`;
+        const mockText = generateMockResponse(zones, incidents, locale) + `\n\n(Simulated reply to: "${sanitized}")`;
         setChatHistory(prev => [
           ...prev,
-          { role: 'user', text: trimmed },
+          { role: 'user', text: sanitized },
           { role: 'model', text: mockText }
         ]);
         setIsLoading(false);
-      }, 1000);
+      }, SIMULATION_DELAY_CHAT_MS);
       return;
     }
 
-    callGemini(trimmed, chatHistory);
+    callGemini(sanitized, chatHistory);
   }, [apiKey, zones, incidents, locale, chatHistory, callGemini]);
 
+  /** Clears the entire chat history and resets any error state. */
   const clearChat = useCallback(() => {
     setChatHistory([]);
     setError(null);

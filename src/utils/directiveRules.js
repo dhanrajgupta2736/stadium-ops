@@ -4,6 +4,9 @@ export const DIRECTIVE_SEVERITY = {
   CRITICAL: 'critical',
 };
 
+/** Critical gate wait time threshold in minutes that triggers high-priority alerts. */
+const CRITICAL_GATE_WAIT_THRESHOLD_MINUTES = 25;
+
 function findZone(zonesById, id) {
   return zonesById.get(id) ?? null;
 }
@@ -20,7 +23,7 @@ export const DIRECTIVE_RULES = [
       const gateA = findZone(zonesById, 'gate-a');
       const concourseB = findZone(zonesById, 'concourse-b');
       if (!gateA || !concourseB) return null;
-      if (gateA.waitMinutes > 25 && concourseB.status === 'critical') {
+      if (gateA.waitMinutes > CRITICAL_GATE_WAIT_THRESHOLD_MINUTES && concourseB.status === 'critical') {
         return {
           severity: DIRECTIVE_SEVERITY.CRITICAL,
           messageKey: 'directiveGateAConcourseBCritical',
@@ -36,7 +39,7 @@ export const DIRECTIVE_RULES = [
       const directives = [];
       for (const zone of zonesById.values()) {
         if (zone.category !== 'gate') continue;
-        if (zone.waitMinutes >= 25) {
+        if (zone.waitMinutes >= CRITICAL_GATE_WAIT_THRESHOLD_MINUTES) {
           directives.push({
             severity: DIRECTIVE_SEVERITY.CRITICAL,
             messageKey: 'directiveGateWaitCritical',
@@ -105,8 +108,10 @@ const SEVERITY_ORDER = {
 
 /**
  * Runs every rule against the current zone state and returns a flat,
- * severity-sorted list of directive descriptors (message not yet resolved
- * to a locale string — that happens at render time via the i18n dictionary).
+ * severity-sorted list of directive descriptors.
+ *
+ * @param {Array<Object>} zones - List of active stadium zone objects.
+ * @returns {Array<Object>} Sorted list of active directive objects.
  */
 export function evaluateDirectives(zones) {
   const zonesById = new Map(zones.map((zone) => [zone.id, zone]));

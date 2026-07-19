@@ -12,7 +12,37 @@ export const LOCALE_META = {
   [LOCALES.FR]: { label: 'Français', direction: 'ltr' },
 };
 
-const DICTIONARIES = {
+/**
+ * Translations for new features added in score optimization phase.
+ */
+const EXTRA_TRANSLATIONS = {
+  [LOCALES.EN]: {
+    skipToContent: 'Skip to main content',
+    emergencyActivate: 'Initiate Evacuation',
+    emergencyDeactivate: 'Cancel Evacuation',
+    emergencyBannerActive: 'EMERGENCY EVACUATION PROTOCOL IN EFFECT — ALL UNITS TO STANDBY',
+  },
+  [LOCALES.ES]: {
+    skipToContent: 'Saltar al contenido principal',
+    emergencyActivate: 'Iniciar Evacuación',
+    emergencyDeactivate: 'Cancelar Evacuación',
+    emergencyBannerActive: 'PROTOCOLO DE EVACUACIÓN DE EMERGENCIA EN VIGOR — UNIDADES EN ESPERA',
+  },
+  [LOCALES.AR]: {
+    skipToContent: 'الانتقال إلى المحتوى الرئيسي',
+    emergencyActivate: 'بدء الإخلاء',
+    emergencyDeactivate: 'إلغاء الإخلاء',
+    emergencyBannerActive: 'بروتوكول الإخلاء الطارئ قيد التنفيذ — جميع الوحدات في حالة استعداد',
+  },
+  [LOCALES.FR]: {
+    skipToContent: 'Passer au contenu principal',
+    emergencyActivate: "Lancer l'Évacuation",
+    emergencyDeactivate: "Annuler l'Évacuation",
+    emergencyBannerActive: "PROTOCOLE D'ÉVACUATION D'URGENCE EN VIGUEUR — TOUTES LES UNITÉS EN ALERTE",
+  },
+};
+
+export const DICTIONARIES = {
   [LOCALES.EN]: {
     appTitle: 'Stadium Command Center',
     appSubtitle: 'FIFA World Cup 2026 · Tournament Operations',
@@ -58,7 +88,6 @@ const DICTIONARIES = {
     incidentLogEmpty: 'No incidents logged yet.',
     languageLabel: 'Language',
     capacityOf: 'of',
-    // Copilot & Map extensions
     copilotHeading: 'Gemini AI Copilot',
     copilotSubtitle: 'Real-Time Decision Support',
     copilotStatusLabel: 'AI Status',
@@ -75,6 +104,7 @@ const DICTIONARIES = {
     copilotErrorPrefix: 'Error',
     stadiumMapHeading: 'Stadium Layout Map',
     stadiumMapSelectPrompt: 'Click on a zone sector above to inspect details',
+    ...EXTRA_TRANSLATIONS[LOCALES.EN],
   },
   [LOCALES.ES]: {
     appTitle: 'Centro de Mando del Estadio',
@@ -121,7 +151,6 @@ const DICTIONARIES = {
     incidentLogEmpty: 'Aún no hay incidentes registrados.',
     languageLabel: 'Idioma',
     capacityOf: 'de',
-    // Copilot & Map extensions
     copilotHeading: 'Copiloto IA Gemini',
     copilotSubtitle: 'Soporte de Decisión en Tiempo Real',
     copilotStatusLabel: 'Estado de IA',
@@ -138,6 +167,7 @@ const DICTIONARIES = {
     copilotErrorPrefix: 'Error',
     stadiumMapHeading: 'Mapa de Distribución del Estadio',
     stadiumMapSelectPrompt: 'Haga clic en un sector del mapa para inspeccionar detalles',
+    ...EXTRA_TRANSLATIONS[LOCALES.ES],
   },
   [LOCALES.AR]: {
     appTitle: 'مركز قيادة الملعب',
@@ -184,7 +214,6 @@ const DICTIONARIES = {
     incidentLogEmpty: 'لا توجد حوادث مسجلة بعد.',
     languageLabel: 'اللغة',
     capacityOf: 'من',
-    // Copilot & Map extensions
     copilotHeading: 'مساعد جمناي الذكي',
     copilotSubtitle: 'دعم القرار في الوقت الفعلي',
     copilotStatusLabel: 'حالة الذكاء الاصطناعي',
@@ -201,6 +230,7 @@ const DICTIONARIES = {
     copilotErrorPrefix: 'خطأ',
     stadiumMapHeading: 'مخطط الملعب التفاعلي',
     stadiumMapSelectPrompt: 'انقر على قطاع منطقة أعلاه لمعاينة التفاصيل',
+    ...EXTRA_TRANSLATIONS[LOCALES.AR],
   },
   [LOCALES.FR]: {
     appTitle: 'Centre de Commandement du Stade',
@@ -247,7 +277,6 @@ const DICTIONARIES = {
     incidentLogEmpty: 'Aucun incident signalé pour le moment.',
     languageLabel: 'Langue',
     capacityOf: 'sur',
-    // Copilot & Map extensions
     copilotHeading: 'Copilote IA Gemini',
     copilotSubtitle: 'Aide à la Décision en Temps Réel',
     copilotStatusLabel: 'Statut IA',
@@ -264,6 +293,7 @@ const DICTIONARIES = {
     copilotErrorPrefix: 'Erreur',
     stadiumMapHeading: 'Plan Interactif du Stade',
     stadiumMapSelectPrompt: 'Cliquez sur un secteur de la carte pour inspecter les détails',
+    ...EXTRA_TRANSLATIONS[LOCALES.FR],
   },
 };
 
